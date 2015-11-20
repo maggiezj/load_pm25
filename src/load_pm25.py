@@ -11,9 +11,7 @@ from optparse import OptionParser
 # parse option
 option_parser = OptionParser()
 option_parser.add_option('--output_dir', default='/mydata/pm25', metavar='output directory')
-option_parser.add_option('--token', metavar='pm25.in token')
-option_parser.add_option('--quiet', action='store_true', default=False)
-option_parser.add_option('--server', metavar='SERVER')
+option_parser.add_option('--token', metavar='pm25.in appkey')
 
 options, args = option_parser.parse_args(sys.argv[1:])
 
@@ -21,7 +19,7 @@ options, args = option_parser.parse_args(sys.argv[1:])
 token = {'token': '5j1znBVAsnSf5xQyNQyq'}
 cookies = {}
 
-# 使用网站的cookies模拟
+# 使用测试token的cookies模拟
 token = {}
 cookies = {
     '_aqi_query_session': 'BAh7CUkiD3Nlc3Npb25faWQGOgZFRkkiJTE2OTBlYmVmZTI0ZGQxNWUyMmU4NDg0MTVkMjUwNmMyBjsAVEkiEF9jc3JmX3Rva2VuBjsARkkiMVVQeFdvVStiRi9sT3JhYUl3SUZ1OGpRSjk3RVBvSFpSODRXRzZFYlRYczg9BjsARkkiDGNhcHRjaGEGOwBGIi00ODE2ZTEyMmQ2YmM2NDVhN2QzMzdiZTZhYWFlOTY4MzRiYmVkNmMzSSIdd2FyZGVuLnVzZXIuYXBpX3VzZXIua2V5BjsAVFsHWwZpAkIDSSIiJDJhJDEwJFhGQzRsazhwOFdOOFZUWHVQaXl3R08GOwBU--1c25a8d8a1a062e5cdec873f8e6e0caab6c7d249',
@@ -44,7 +42,7 @@ def get_stations():
     url = "http://www.pm25.in/api/querys/station_names.json"
     try:
         stat_file = open(os.path.join(output_dir, 'stations.csv'), 'w')
-        req = requests.get(url, params = token, cookies = cookies)
+        req = requests.get(url, params = token, cookies = cookies, timeout = (5, 90))
         stations = req.json()
         if 'error' in stations:
             print req.text
@@ -72,8 +70,7 @@ def check_none_value(dd):
 def get_now_data():
     url = "http://www.pm25.in/api/querys/all_cities.json"
     timestamp = None
-    b_output_content = True
-    b_update_timestamp = True
+    update_data = False
     try:
         timestamp_f = open(os.path.join(output_dir, 'timestamp'), 'r')
         str_timestamp = timestamp_f.readline()
@@ -83,9 +80,10 @@ def get_now_data():
         pass
 
     try:
-        req = requests.get(url, params = token, cookies = cookies)
+        req = requests.get(url, params = token, cookies = cookies, timeout = (5, 90))
         result = req.json()
         if 'error' in result:
+            print str(datetime.now())
             print req.text
             return False
         for it in result:
@@ -93,10 +91,17 @@ def get_now_data():
                 print 'get station_code error'
                 continue
             stat_code = it['station_code'].encode('utf-8')
-            cur_time = datetime.strptime(it['time_point'].encode('utf-8'), "%Y-%m-%dT%H:%M:%SZ")
-            if timestamp and timestamp == cur_time:
-                b_output_content = False
-            if b_output_content is True:
+            if not update_data:
+                cur_time = datetime.strptime(it['time_point'].encode('utf-8'), "%Y-%m-%dT%H:%M:%SZ")
+                if timestamp and timestamp == cur_time:
+                    print str(datetime.now()), 'waiting for next hour to update data\n'
+                    return True
+                else:
+                    update_data = True
+                    timestamp_f = open(os.path.join(output_dir, 'timestamp'), 'w')
+                    timestamp_f.write(cur_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+                    timestamp_f.close()
+            if update_data is True:
                 fp = open(os.path.join(output_dir, stat_code + '.csv'), 'a+')
                 check_none_value(it)
                 fp.write('%s,%s,%s' % (it['area'].encode('utf-8'), it['position_name'].encode('utf-8'), it['station_code'].encode('utf-8')))
@@ -110,21 +115,14 @@ def get_now_data():
                 fp.write(',%d,%d' % (it['o3_8h'], it['o3_8h_24h']))
                 fp.write(',%d,%d\n' % (it['so2'], it['so2_24h']))
                 fp.close()
-            if b_update_timestamp is True:
-                timestamp_f = open(os.path.join(output_dir, 'timestamp'), 'w')
-                timestamp_f.write(cur_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
-                timestamp_f.close()
-                b_update_timestamp = False
-        print datetime.now()
-        print 'updated data\n'
+        print str(datetime.now()), 'updated data\n'
         return True
     except Exception,ex:
         print datetime.now()
-        print Exception,":",ex
+        print ex
         return False
 
 def main():
-    print "begin..."
     success = get_stations()
     if success:
         while(True):
@@ -137,8 +135,7 @@ def main():
                     time.sleep(60)
             time.sleep(3600)
     else:
-        print "exit because pm25.in refused"
-    print "end..."
+        print "init failed, pm25.in refused"
 
 
 if __name__ == '__main__':
