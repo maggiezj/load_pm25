@@ -133,7 +133,7 @@ def main():
                 if not success:
                     failed_count += 1
                     time.sleep(60)
-            time.sleep(3600)
+            time.sleep(1800)
     else:
         print "init failed, pm25.in refused"
 
