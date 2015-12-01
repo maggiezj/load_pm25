@@ -53,7 +53,7 @@ def get_stations():
             for it2 in stats:
                 stat_name = it2['station_name']
                 stat_code = it2['station_code']
-                stat_file.write('%s,%s,%s\n' % (city.encode('utf-8'), stat_name.encode('utf-8'), stat_code.encode('utf-8')))
+                stat_file.write('%s\t%s\t%s\n' % (city.encode('utf-8'), stat_name.encode('utf-8'), stat_code.encode('utf-8')))
         stat_file.close()
         return True
     except Exception,ex:
@@ -104,16 +104,16 @@ def get_now_data():
             if update_data is True:
                 fp = open(os.path.join(output_dir, stat_code + '.csv'), 'a+')
                 check_none_value(it)
-                fp.write('%s,%s,%s' % (it['area'].encode('utf-8'), it['position_name'].encode('utf-8'), it['station_code'].encode('utf-8')))
-                fp.write(',%s,%s,%s' % (it['time_point'].encode('utf-8'), it['quality'].encode('utf-8'), it['primary_pollutant'].encode('utf-8')))
-                fp.write(',%d' % it['aqi'])
-                fp.write(',%d,%d' % (it['pm2_5'], it['pm2_5_24h']))
-                fp.write(',%d,%d' % (it['pm10'], it['pm10_24h']))
-                fp.write(',%d,%d' % (it['co'], it['co_24h']))
-                fp.write(',%d,%d' % (it['no2'], it['no2_24h']))
-                fp.write(',%d,%d' % (it['o3'], it['o3_24h']))
-                fp.write(',%d,%d' % (it['o3_8h'], it['o3_8h_24h']))
-                fp.write(',%d,%d\n' % (it['so2'], it['so2_24h']))
+                fp.write('%s\t%s\t%s' % (it['area'].encode('utf-8'), it['position_name'].encode('utf-8'), it['station_code'].encode('utf-8')))
+                fp.write('\t%s\t%s\t%s' % (it['time_point'].encode('utf-8'), it['quality'].encode('utf-8'), it['primary_pollutant'].encode('utf-8')))
+                fp.write('\t%d' % it['aqi'])
+                fp.write('\t%d\t%d' % (it['pm2_5'], it['pm2_5_24h']))
+                fp.write('\t%d\t%d' % (it['pm10'], it['pm10_24h']))
+                fp.write('\t%d\t%d' % (it['co'], it['co_24h']))
+                fp.write('\t%d\t%d' % (it['no2'], it['no2_24h']))
+                fp.write('\t%d\t%d' % (it['o3'], it['o3_24h']))
+                fp.write('\t%d\t%d' % (it['o3_8h'], it['o3_8h_24h']))
+                fp.write('\t%d\t%d\n' % (it['so2'], it['so2_24h']))
                 fp.close()
         print str(datetime.now()), 'updated data\n'
         return True
@@ -123,7 +123,8 @@ def get_now_data():
         return False
 
 def main():
-    success = get_stations()
+    success = True
+    # success = get_stations()
     if success:
         while(True):
             success = False
