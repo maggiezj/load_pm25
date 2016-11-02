@@ -41,20 +41,19 @@ if not os.path.isdir(output_dir):
 def get_stations():
     url = "http://www.pm25.in/api/querys/station_names.json"
     try:
-        stat_file = open(os.path.join(output_dir, 'stations.csv'), 'w')
-        req = requests.get(url, params = token, cookies = cookies, timeout = (5, 90))
-        stations = req.json()
-        if 'error' in stations:
-            print req.text
-            return False
-        for it in stations:
-            city = it['city']
-            stats = it['stations']
-            for it2 in stats:
-                stat_name = it2['station_name']
-                stat_code = it2['station_code']
-                stat_file.write('%s\t%s\t%s\n' % (city.encode('utf-8'), stat_name.encode('utf-8'), stat_code.encode('utf-8')))
-        stat_file.close()
+        with open(os.path.join(output_dir, 'stations.csv'), 'w', encoding='utf-8') as stat_file:
+            req = requests.get(url, params = token, cookies = cookies, timeout = (5, 90))
+            stations = req.json()
+            if 'error' in stations:
+                print req.text
+                return False
+            for it in stations:
+                city = it['city']
+                stats = it['stations']
+                for it2 in stats:
+                    stat_name = it2['station_name']
+                    stat_code = it2['station_code']
+                    stat_file.write('%s\t%s\t%s\n' % (city, stat_name, stat_code))
         return True
     except Exception,ex:
         print datetime.now()
@@ -102,19 +101,18 @@ def get_now_data():
                     timestamp_f.write(cur_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
                     timestamp_f.close()
             if update_data is True:
-                fp = open(os.path.join(output_dir, stat_code + '.csv'), 'a+')
-                check_none_value(it)
-                fp.write('%s\t%s\t%s' % (it['area'].encode('utf-8'), it['position_name'].encode('utf-8'), it['station_code'].encode('utf-8')))
-                fp.write('\t%s\t%s\t%s' % (it['time_point'].encode('utf-8'), it['quality'].encode('utf-8'), it['primary_pollutant'].encode('utf-8')))
-                fp.write('\t%d' % it['aqi'])
-                fp.write('\t%d\t%d' % (it['pm2_5'], it['pm2_5_24h']))
-                fp.write('\t%d\t%d' % (it['pm10'], it['pm10_24h']))
-                fp.write('\t%d\t%d' % (it['co'], it['co_24h']))
-                fp.write('\t%d\t%d' % (it['no2'], it['no2_24h']))
-                fp.write('\t%d\t%d' % (it['o3'], it['o3_24h']))
-                fp.write('\t%d\t%d' % (it['o3_8h'], it['o3_8h_24h']))
-                fp.write('\t%d\t%d\n' % (it['so2'], it['so2_24h']))
-                fp.close()
+                with open(os.path.join(output_dir, stat_code + '.csv'), 'a+', encoding='utf-8') as fp:
+                    check_none_value(it)
+                    fp.write('%s\t%s\t%s' % (it['area'], it['position_name'], it['station_code']))
+                    fp.write('\t%s\t%s\t%s' % (it['time_point'], it['quality'], it['primary_pollutant']))
+                    fp.write('\t%d' % it['aqi'])
+                    fp.write('\t%d\t%d' % (it['pm2_5'], it['pm2_5_24h']))
+                    fp.write('\t%d\t%d' % (it['pm10'], it['pm10_24h']))
+                    fp.write('\t%d\t%d' % (it['co'], it['co_24h']))
+                    fp.write('\t%d\t%d' % (it['no2'], it['no2_24h']))
+                    fp.write('\t%d\t%d' % (it['o3'], it['o3_24h']))
+                    fp.write('\t%d\t%d' % (it['o3_8h'], it['o3_8h_24h']))
+                    fp.write('\t%d\t%d\n' % (it['so2'], it['so2_24h']))
         print str(datetime.now()), 'updated data\n'
         return True
     except Exception,ex:
